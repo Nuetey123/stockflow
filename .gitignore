@@ -1,0 +1,4 @@
+assets/js/config.js 
+.env 
+*.env 
+Thumbs.db 

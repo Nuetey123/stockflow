@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - StockFlow RAHA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="dashboard-body">
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-school"></i>
+                <h2>StockFlow<br><span>RAHA</span></h2>
+            </div>
+            <nav class="menu">
+                <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="inventory.html" class="active"><i class="fas fa-box-open"></i> Inventory</a>
+                <a href="sales.html"><i class="fas fa-shopping-cart"></i> Sales</a>
+                <a href="#"><i class="fas fa-file-invoice-dollar"></i> Reports</a>
+            </nav>
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Admin+User&background=C8A2D9&color=fff" alt="User">
+                <div class="info">
+                    <h4>Administrator</h4>
+                    <p>Online</p>
+                </div>
+                <a href="index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>Inventory Management</h1>
+                    <p>Add, Import, Export, and Manage Stock Levels</p>
+                </div>
+                <div class="actions">
+                    <!-- ADD SINGLE BUTTON -->
+                    <button class="btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
+                    <!-- IMPORT BUTTON -->
+                    <button class="btn-secondary" onclick="openImportModal()">
+                        <i class="fas fa-file-upload"></i> Import CSV
+                    </button>
+                    <!-- EXPORT BUTTON -->
+                    <button class="btn-secondary" onclick="openExportModal()">
+                        <i class="fas fa-file-download"></i> Export Report
+                    </button>
+                </div>
+            </header>
+
+            <!-- Filters -->
+            <section class="card" style="margin-bottom: 20px; padding: 15px;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <select class="search-input" style="flex:1;" id="category-filter">
+                        <option value="all">All Categories</option>
+                        <option value="PE_KIT">P.E Kits</option>
+                        <option value="LILAC_UNIFORM">Lilac Uniforms</option>
+                        <option value="CUSTOMISED_UNIFORM">Customised Uniforms</option>
+                        <option value="LACOSTE_TSHIRT">Lacoste T-Shirts</option>
+                        <option value="SOCKS">Socks</option>
+                    </select>
+                    <input type="text" class="search-input" style="flex:2;" id="search-input" placeholder="Search inventory...">
+                    <button class="btn-icon"><i class="fas fa-search"></i></button>
+                </div>
+            </section>
+
+            <!-- Table -->
+            <section class="table-section card">
+                <div class="table-responsive">
+                    <table class="stock-table">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Size/Batch</th>
+                                <th>Current Stock</th>
+                                <th>Unit Price (GH¢)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body">
+                            <!-- Data injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ADD SINGLE PRODUCT MODAL -->
+    <div id="add-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAddModal()">&times;</span>
+            <h2><i class="fas fa-plus-circle"></i> Add New Product</h2>
+            <form id="add-product-form">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="new-item-name" placeholder="e.g., GIRLS BLUE P.E KIT" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="new-item-category" required>
+                        <option value="PE_KIT">P.E Kit</option>
+                        <option value="LILAC_UNIFORM">Lilac Uniform</option>
+                        <option value="CUSTOMISED_UNIFORM">Customised Uniform</option>
+                        <option value="LACOSTE_TSHIRT">Lacoste T-Shirt</option>
+                        <option value="SOCKS">Socks</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Size / Batch Info</label>
+                    <input type="text" id="new-item-size" placeholder="e.g., SIZE 100 or LARGE (LOCALLY SEWN)" required>
+                </div>
+                <div class="form-group">
+                    <label>Initial Stock</label>
+                    <input type="number" id="new-item-stock" min="0" value="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Unit Price (GH¢)</label>
+                    <input type="number" id="new-item-price" step="0.01" min="0" required>
+                </div>
+                <button type="submit" class="btn-primary full-width">Add to Inventory</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- IMPORT MODAL -->
+    <div id="import-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeImportModal()">&times;</span>
+            <h2><i class="fas fa-upload"></i> Import Inventory</h2>
+            <p style="margin-bottom: 15px; color: #666;">Upload a CSV file with columns: <br><code>Name, Category, Size, Stock, Price</code></p>
+            <div class="form-group">
+                <input type="file" id="csv-file-input" accept=".csv" style="border: 2px dashed #ccc; padding: 20px; width: 100%; text-align: center;">
+            </div>
+            <button class="btn-primary full-width" onclick="processImport()">Upload & Update</button>
+        </div>
+    </div>
+
+    <!-- EXPORT MODAL -->
+    <div id="export-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeExportModal()">&times;</span>
+            <h2><i class="fas fa-download"></i> Export Report</h2>
+            <p style="margin-bottom: 15px; color: #666;">Download data for Senior Management.</p>
+            <div class="form-group">
+                <label>Report Type</label>
+                <select id="export-type">
+                    <option value="full_stock">Full Stock List</option>
+                    <option value="low_stock">Low Stock Alert (< 5 items)</option>
+                </select>
+            </div>
+            <button class="btn-primary full-width" onclick="executeExport()">Download CSV</button>
+        </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/inventory.js"></script>
+</body>
+</html>

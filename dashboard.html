@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - StockFlow RAHA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css"> <!-- Shared Auth Styles -->
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="dashboard-body">
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-school"></i>
+                <h2>StockFlow<br><span>RAHA</span></h2>
+            </div>
+
+            <nav class="menu">
+                <a href="#" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="inventory.html"><i class="fas fa-box-open"></i> Inventory</a>
+                <a href="sales.html"><i class="fas fa-shopping-cart"></i> Sales</a>
+                <a href="reports.html"><i class="fas fa-file-invoice-dollar"></i> Reports</a>
+                <a href="#"><i class="fas fa-users-cog"></i> Users</a>
+                <a href="#"><i class="fas fa-cog"></i> Settings</a>
+            </nav>
+
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Admin+User&background=C8A2D9&color=fff" alt="User">
+                <div class="info">
+                    <h4>Administrator</h4>
+                    <p>Online</p>
+                </div>
+                <a href="index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- TOP HEADER -->
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>Weekly Stock Control</h1>
+                    <p id="current-date">Loading date...</p>
+                </div>
+
+                <div class="week-controls">
+                    <div class="week-selector">
+                        <label>Current Week:</label>
+                        <select id="week-select">
+                            <option value="11">Week 11 (2026)</option>
+                            <option value="12">Week 12 (2026)</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" id="btn-close-week"><i class="fas fa-lock"></i> Close Week</button>
+                    <button class="btn-secondary" id="btn-open-week"><i class="fas fa-unlock"></i> Open New Week</button>
+                </div>
+            </header>
+
+            <!-- STATS CARDS -->
+            <section class="stats-grid">
+                <div class="card stat-card">
+                    <div class="icon-box gold"><i class="fas fa-coins"></i></div>
+                    <div class="stat-info">
+                        <h3>Total Revenue</h3>
+                        <p class="value" id="total-revenue">GH¢ 0.00</p>
+                        <span class="trend positive"><i class="fas fa-arrow-up"></i> This Week</span>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-box lilac"><i class="fas fa-tshirt"></i></div>
+                    <div class="stat-info">
+                        <h3>Items Sold</h3>
+                        <p class="value" id="items-sold">0</p>
+                        <span class="trend neutral">Units</span>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-box dark"><i class="fas fa-boxes"></i></div>
+                    <div class="stat-info">
+                        <h3>Low Stock Items</h3>
+                        <p class="value" id="low-stock-count">0</p>
+                        <span class="trend negative">Needs Restock</span>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-box green"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-info">
+                        <h3>Week Status</h3>
+                        <p class="value" id="week-status">OPEN</p>
+                        <span class="trend neutral">Active</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INVENTORY TABLE SECTION -->
+            <section class="table-section card">
+                <div class="table-header">
+                    <h2><i class="fas fa-list"></i> Stock Sheet (Week 11)</h2>
+                    <div class="table-actions">
+                        <input type="text" placeholder="Search items..." class="search-input">
+                        <button class="btn-icon"><i class="fas fa-filter"></i></button>
+                        <button class="btn-icon"><i class="fas fa-download"></i></button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="stock-table">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Size/Batch</th>
+                                <th>Opening</th>
+                                <th>Add</th>
+                                <th>Total</th>
+                                <th>Sold</th>
+                                <th>Price (GH¢)</th>
+                                <th>Closing</th>
+                                <th>Revenue</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stock-table-body">
+                            <!-- Data will be injected here by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL FOR RESTOCK/SALE -->
+    <div id="action-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">Record Sale</h2>
+            <form id="action-form">
+                <div class="form-group">
+                    <label>Item</label>
+                    <input type="text" id="modal-item-name" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="modal-quantity" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="modal-type">
+                        <option value="sale">Sale (Deduct Stock)</option>
+                        <option value="restock">Restock (Add Stock)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary full-width">Confirm</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>
