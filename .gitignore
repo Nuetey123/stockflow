@@ -1,4 +1,8 @@
+# Security: Never commit real API keys 
 assets/js/config.js 
 .env 
 *.env 
 Thumbs.db 
+desktop.ini 
+node_modules/ 
+*.log 
