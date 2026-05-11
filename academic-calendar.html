@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Calendar - StockFlow RAHA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Reuse basic styles from inventory or style.css */
+        .hidden { display: none !important; }
+        .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-secondary { background: #e5e7eb; color: #374151; }
+        .nav-tabs { border-bottom: 2px solid #e5e7eb; margin-bottom: 1rem; list-style: none; padding: 0; display: flex; }
+        .nav-tabs li { margin-right: 1rem; }
+        .nav-tabs a { text-decoration: none; color: #6b7280; padding: 0.5rem 1rem; display: block; border-bottom: 2px solid transparent; }
+        .nav-tabs a.active { color: #7c3aed; border-bottom-color: #7c3aed; font-weight: 600; }
+        .form-control, .form-select { padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; width: 100%; margin-bottom: 0.5rem; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-primary { background: #7c3aed; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+        .d-flex { display: flex; }
+        .gap-2 { gap: 0.5rem; }
+        .justify-content-between { justify-content: space-between; }
+        .align-items-center { align-items: center; }
+        .border-bottom { border-bottom: 1px solid #e5e7eb; }
+        .p-2 { padding: 0.5rem; }
+        .mb-3 { margin-bottom: 1rem; }
+        .small { font-size: 0.875rem; }
+        .text-muted { color: #6b7280; }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="app-container">
+        <!-- Sidebar (Same as Inventory) -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-school"></i>
+                <h2>StockFlow<br><span>RAHA</span></h2>
+            </div>
+            <nav class="menu">
+                <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="inventory.html"><i class="fas fa-box-open"></i> Inventory</a>
+                <a href="academic-calendar.html" class="active"><i class="fas fa-calendar-alt"></i> Academic Calendar</a>
+                <a href="sales.html"><i class="fas fa-shopping-cart"></i> Sales</a>
+                <a href="#"><i class="fas fa-file-invoice-dollar"></i> Reports</a>
+            </nav>
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Admin+User&background=C8A2D9&color=fff" alt="User">
+                <div class="info">
+                    <h4>Administrator</h4>
+                    <p>Online</p>
+                </div>
+                <a href="index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>Academic Calendar Setup</h1>
+                    <p>Manage Years, Terms, and Weeks. Open weeks to carry forward stock.</p>
+                </div>
+            </header>
+
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav-tabs" id="adminTabs">
+                        <li><a class="active" href="#" onclick="switchTab('years'); return false;">📅 Academic Years</a></li>
+                        <li><a href="#" onclick="switchTab('terms'); return false;">📚 Terms</a></li>
+                        <li><a href="#" onclick="switchTab('weeks'); return false;">🗓️ Weeks</a></li>
+                    </ul>
+
+                    <!-- Years Tab -->
+                    <div id="tab-years">
+                        <form id="add-year-form" class="d-flex gap-2 mb-3 flex-wrap">
+                            <input type="text" id="year-name" class="form-control" placeholder="Year Name (e.g., 2025/2026)" style="flex:2;" required>
+                            <input type="date" id="year-start" class="form-control" style="flex:1;" required>
+                            <input type="date" id="year-end" class="form-control" style="flex:1;" required>
+                            <button type="submit" class="btn btn-primary">Add Year</button>
+                        </form>
+                        <div id="years-list" class="small"></div>
+                    </div>
+
+                    <!-- Terms Tab -->
+                    <div id="tab-terms" class="hidden">
+                        <div class="mb-3">
+                            <label class="small">Select Academic Year:</label>
+                            <select id="term-year-select" class="form-select"></select>
+                        </div>
+                        <form id="add-term-form" class="d-flex gap-2 mb-3 flex-wrap">
+                            <input type="text" id="term-name" class="form-control" placeholder="Term Name" style="flex:2;" required>
+                            <input type="number" id="term-number" class="form-control" placeholder="#" min="1" max="3" value="1" style="width:60px;" required>
+                            <input type="date" id="term-start" class="form-control" style="flex:1;" required>
+                            <input type="date" id="term-end" class="form-control" style="flex:1;" required>
+                            <button type="submit" class="btn btn-primary">Add Term</button>
+                        </form>
+                        <div id="terms-list" class="small"></div>
+                    </div>
+
+                    <!-- Weeks Tab -->
+                    <div id="tab-weeks" class="hidden">
+                        <div class="mb-3">
+                            <label class="small">Select Term:</label>
+                            <select id="week-term-select" class="form-select" onchange="loadWeeksForTerm()"></select>
+                        </div>
+                        <form id="add-week-form" class="d-flex gap-2 mb-3 flex-wrap">
+                            <input type="text" id="week-name" class="form-control" placeholder="Week Name" style="flex:2;" required>
+                            <input type="number" id="week-number" class="form-control" placeholder="#" min="1" style="width:60px;" required>
+                            <input type="date" id="week-start" class="form-control" style="flex:1;" required>
+                            <input type="date" id="week-end" class="form-control" style="flex:1;" required>
+                            <button type="submit" class="btn btn-primary">Add Week</button>
+                        </form>
+                        <div id="weeks-list" class="small"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/calendar-admin.js"></script>
+</body>
+</html>

@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockFlow RAHA - Access Portal</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockFlow RAHA - Access Portal</title>
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Supabase JS Client (ONLY ONCE - in head) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 
@@ -46,6 +43,7 @@
                 </div>
 
                 <button type="submit">Sign Up</button>
+                <p class="error-message" id="signupError"></p>
             </form>
         </div>
 
@@ -63,8 +61,9 @@
                     <i class="fas fa-eye input-icon" onclick="togglePassword('signinPassword', this)"></i>
                 </div>
 
-                <a href="#">Forgot your password?</a>
+                <a href="#" style="font-size: 0.875rem; color: #666; margin: 0.5rem 0;">Forgot your password?</a>
                 <button type="submit">Sign In</button>
+                <p class="error-message" id="signinError"></p>
             </form>
         </div>
 
@@ -85,8 +84,9 @@
         </div>
     </div>
 
-    <!-- Scripts: Config FIRST, then Auth (NO duplicate CDN) -->
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/auth.js"></script>
+    <!-- Only the Auth Logic Script -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/auth.js"></script>
 </body>
 </html>
