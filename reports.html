@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - StockFlow RAHA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="dashboard-body">
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-school"></i>
+                <h2>StockFlow<br><span>RAHA</span></h2>
+            </div>
+            <nav class="menu">
+                <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="inventory.html"><i class="fas fa-box-open"></i> Inventory</a>
+                <a href="sales.html"><i class="fas fa-shopping-cart"></i> Sales</a>
+                <a href="reports.html" class="active"><i class="fas fa-file-invoice-dollar"></i> Reports</a>
+            </nav>
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Admin+User&background=C8A2D9&color=fff" alt="User">
+                <div class="info">
+                    <h4>Administrator</h4>
+                    <p>Online</p>
+                </div>
+                <a href="index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>Reports & Analysis</h1>
+                    <p>Weekly Performance & Inventory Insights</p>
+                </div>
+                <div class="actions">
+                    <button class="btn-primary" onclick="exportFullReport()">
+                        <i class="fas fa-file-excel"></i> Export Full Report
+                    </button>
+                </div>
+            </header>
+
+            <!-- KPI Cards -->
+            <section class="stats-grid">
+                <div class="card stat-card">
+                    <div class="icon-box gold"><i class="fas fa-coins"></i></div>
+                    <div class="stat-info">
+                        <h3>Total Revenue (Week 11)</h3>
+                        <p class="value" id="report-revenue">GH¢ 0.00</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-box lilac"><i class="fas fa-tshirt"></i></div>
+                    <div class="stat-info">
+                        <h3>Total Units Sold</h3>
+                        <p class="value" id="report-units">0</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-box dark"><i class="fas fa-percentage"></i></div>
+                    <div class="stat-info">
+                        <h3>Top Category</h3>
+                        <p class="value" id="report-top-cat">-</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="card">
+                    <h3><i class="fas fa-chart-bar"></i> Sales by Category</h3>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-chart-pie"></i> Stock Distribution</h3>
+                    <canvas id="stockChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Detailed Tables -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+                <!-- Top Sellers -->
+                <section class="table-section card">
+                    <div class="table-header">
+                        <h2><i class="fas fa-fire"></i> Top 5 Selling Items</h2>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="stock-table">
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-sellers-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Low Stock Alert -->
+                <section class="table-section card">
+                    <div class="table-header">
+                        <h2><i class="fas fa-exclamation-triangle"></i> Low Stock Alert (< 5)</h2>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="stock-table">
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Current Stock</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="low-stock-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/reports.js"></script>
+</body>
+</html>
