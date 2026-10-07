@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>One-Time Data Setup</title>
+    <style>body { font-family: sans-serif; padding: 50px; text-align: center; }</style>
+</head>
+<body>
+    <h1>Setting up StockFlow RAHA Database...</h1>
+    <p id="status">Processing...</p>
+
+    <script>
+        // YOUR EXCEL DATA (Parsed into JSON)
+        const initialInventory = [
+            { id: 1, name: "GIRLS BLUE P.E KIT", category: "PE_KIT", size: "SIZE 100", stock: 21, price: 50 },
+            { id: 2, name: "GIRLS GREEN P.E KIT", category: "PE_KIT", size: "SIZE 100", stock: 7, price: 50 },
+            { id: 3, name: "GIRLS YELLOW P.E KIT", category: "PE_KIT", size: "SIZE 100", stock: 18, price: 50 },
+            { id: 4, name: "GIRLS RED P.E KIT", category: "PE_KIT", size: "SIZE 100", stock: 11, price: 50 },
+            { id: 5, name: "GIRLS BLUE P.E KIT", category: "PE_KIT", size: "SIZE 120", stock: 10, price: 50 },
+            { id: 6, name: "GIRLS GREEN P.E KIT", category: "PE_KIT", size: "SIZE 120", stock: 13, price: 50 },
+            { id: 7, name: "GIRLS YELLOW P.E KIT", category: "PE_KIT", size: "SIZE 120", stock: 8, price: 50 },
+            { id: 8, name: "GIRLS RED P.E KIT", category: "PE_KIT", size: "SIZE 120", stock: 0, price: 50 },
+            { id: 9, name: "GIRLS BLUE P.E KIT", category: "PE_KIT", size: "SIZE 140", stock: 1, price: 50 },
+            { id: 10, name: "GIRLS GREEN P.E KIT", category: "PE_KIT", size: "SIZE 140", stock: 5, price: 50 },
+            { id: 11, name: "GIRLS YELLOW P.E KIT", category: "PE_KIT", size: "SIZE 140", stock: 8, price: 50 }, // Sold 1
+            { id: 12, name: "GIRLS RED P.E KIT", category: "PE_KIT", size: "SIZE 140", stock: 6, price: 50 },
+            { id: 13, name: "GIRLS BLUE P.E KIT", category: "PE_KIT", size: "SIZE 160", stock: 10, price: 50 },
+            { id: 14, name: "GIRLS GREEN P.E KIT", category: "PE_KIT", size: "SIZE 160", stock: 2, price: 50 },
+            { id: 15, name: "GIRLS YELLOW P.E KIT", category: "PE_KIT", size: "SIZE 160", stock: 2, price: 50 },
+            { id: 16, name: "GIRLS RED P.E KIT", category: "PE_KIT", size: "SIZE 160", stock: 2, price: 50 },
+            { id: 17, name: "BOYS LILAC SHIRT UNIFORM", category: "LILAC_UNIFORM", size: "SIZE 8-9 yrs", stock: 2, price: 120 }, // Sold 1
+            { id: 18, name: "BOYS CUSTOMISED SHORTS", category: "CUSTOMISED_UNIFORM", size: "SIZE 8-9 yrs", stock: 2, price: 145 }, // Sold 1
+            { id: 19, name: "BOYS CUSTOMISED SHIRT", category: "CUSTOMISED_UNIFORM", size: "SIZE 10-12 yrs", stock: 21, price: 145 }, // Sold 1
+            { id: 20, name: "BOYS CUSTOMISED SHIRT", category: "CUSTOMISED_UNIFORM", size: "SIZE 14-16", stock: 25, price: 145 }, // Sold 1
+            { id: 21, name: "BOYS CUSTOMISED SHORTS", category: "CUSTOMISED_UNIFORM", size: "SIZE 14-16", stock: 24, price: 145 }, // Sold 1
+            { id: 22, name: "GIRLS CUSTOMISED SCHOOL UNIFORM", category: "CUSTOMISED_UNIFORM", size: "SIZE 4-5 yrs", stock: 0, price: 290 }, // Sold 1
+            { id: 23, name: "MAROON LACOSTE T-SHIRTS", category: "LACOSTE_TSHIRT", size: "SIZE 16", stock: 19, price: 60 }, // Sold 2
+            { id: 24, name: "MAROON LACOSTE T-SHIRTS", category: "LACOSTE_TSHIRT", size: "SIZE 18", stock: 14, price: 60 }, // Sold 2
+            { id: 25, name: "WHITE SOCKS", category: "SOCKS", size: "SIZE MEDIUM", stock: 89, price: 25 }, // Sold 1
+            { id: 26, name: "WHITE SOCKS", category: "SOCKS", size: "SIZE EXTRA LARGE", stock: 36, price: 25 }, // Sold 1
+            { id: 27, name: "GREY SOCKS", category: "SOCKS", size: "SIZE 10-12 YEARS", stock: 54, price: 40 }, // Sold 2
+            { id: 28, name: "WHITE SOCKS", category: "SOCKS", size: "SIZE 10-12 YEARS", stock: 51, price: 40 } // Sold 2
+        ];
+
+        // Save to LocalStorage (Mock DB)
+        localStorage.setItem('raha_inventory', JSON.stringify(initialInventory));
+
+        // Create some mock sales history for Reports
+        const mockSales = initialInventory.filter(i => i.stock < 21); // Simple logic to find sold items
+        localStorage.setItem('raha_sales', JSON.stringify(mockSales));
+
+        document.getElementById('status').innerText = "✅ Database Setup Complete! You can now close this tab and open dashboard.html or reports.html";
+        document.body.style.backgroundColor = "#d4edda";
+    </script>
+</body>
+</html>

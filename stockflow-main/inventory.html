@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory - StockFlow RAHA</title>
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Your Existing Styles -->
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="stylesheet" href="assets/css/dashboard.css" />
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* Inline styles to ensure basic functionality if external CSS is missing */
+        .hidden { display: none !important; }
+        .text-danger { color: #ef4444; }
+        .text-muted { color: #6b7280; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; }
+        .badge-success { background-color: #d1fae5; color: #065f46; }
+        .badge-warning { background-color: #fef3c7; color: #92400e; }
+        .btn-icon { background: none; border: none; cursor: pointer; padding: 5px; color: #4b5563; }
+        .btn-icon:hover { color: #2563eb; }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 20px; border-radius: 8px;
+            width: 90%; max-width: 500px; position: relative;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .close-modal {
+            position: absolute; top: 10px; right: 15px;
+            font-size: 1.5rem; cursor: pointer;
+        }
+
+        /* Form Helpers */
+        .form-group { margin-bottom: 15px; }
+        .form-control, .form-select {
+            width: 100%; padding: 8px; border: 1px solid #d1d5db;
+            border-radius: 4px; box-sizing: border-box;
+        }
+        .btn-primary {
+            background-color: #2563eb; color: white; border: none;
+            padding: 10px; border-radius: 4px; cursor: pointer; width: 100%;
+        }
+        .btn-primary:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .btn-secondary {
+            background-color: #fff; border: 1px solid #d1d5db;
+            padding: 8px 12px; border-radius: 4px; cursor: pointer;
+        }
+        .w-100 { width: 100%; }
+        .mb-3 { margin-bottom: 1rem; }
+        .p-3 { padding: 1rem; }
+        .rounded { border-radius: 0.375rem; }
+        .d-flex { display: flex; }
+        .justify-content-between { justify-content: space-between; }
+        .align-items-center { align-items: center; }
+
+        /* Info Badge */
+        .info-badge {
+            background: #eff6ff; border: 1px solid #bfdbfe;
+            color: #1e40af; padding: 8px 12px; border-radius: 6px;
+            margin-top: 10px; display: flex; align-items: center; gap: 10px;
+            font-size: 0.9rem;
+        }
+        .btn-link { background: none; border: none; color: inherit; cursor: pointer; text-decoration: underline; }
+    </style>
+</head>
+
+<body class="dashboard-body">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-school"></i>
+                <h2>StockFlow<br /><span>RAHA</span></h2>
+            </div>
+
+            <nav class="menu">
+                <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="inventory.html" class="active"><i class="fas fa-box-open"></i> Inventory</a>
+                <a href="academic-calendar.html"><i class="fas fa-calendar-alt"></i> Academic Calendar</a>
+                <a href="sales.html"><i class="fas fa-shopping-cart"></i> Sales</a>
+                <a href="reports.html"><i class="fas fa-file-invoice-dollar"></i> Reports</a>
+            </nav>
+
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Loading...&background=C8A2D9&color=fff" alt="User" />
+                <div class="info">
+                    <h4>Loading...</h4>
+                    <p>...</p>
+                </div>
+                <a href="#" class="logout-btn" onclick="handleLogout(event)">
+                    <i class="fas fa-right-from-bracket"></i> Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>Inventory Management</h1>
+                    <p>Add, Import, Export, and Manage Stock Levels</p>
+                </div>
+                <div class="actions">
+                    <button class="btn-primary" style="width:auto;" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Add New Product
+                    </button>
+                    <button class="btn-secondary" onclick="openImportModal()">
+                        <i class="fas fa-file-upload"></i> Import CSV
+                    </button>
+                </div>
+            </header>
+
+            <!-- Filters Section -->
+            <section class="card mb-3">
+                <div class="filters-row" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                    <select class="search-input form-select" id="category-filter" style="flex:1; min-width:150px;">
+                        <option value="all">All Categories</option>
+                        <option value="PE_KIT">P.E Kits</option>
+                        <option value="LILAC_UNIFORM">Lilac Uniforms</option>
+                        <option value="CUSTOMISED_UNIFORM">Customised Uniforms</option>
+                        <option value="LACOSTE_TSHIRT">Lacoste T-Shirts</option>
+                        <option value="SOCKS">Socks</option>
+                    </select>
+
+                    <!-- Academic Dropdowns -->
+                    <div class="academic-filters" style="display:flex; gap:5px; flex:2; min-width:300px;">
+                        <select id="academic-year-select" class="search-input form-select">
+                            <option value="">Loading years...</option>
+                        </select>
+                        <select id="term-select" class="search-input form-select">
+                            <option value="">Select Term</option>
+                        </select>
+                        <select id="week-select" class="search-input form-select">
+                            <option value="">Select Week</option>
+                        </select>
+                        <button class="btn-icon" id="apply-academic-filter" title="Apply Filter" type="button" style="background:#e5e7eb; padding:8px; border-radius:4px;">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <button class="btn-icon btn-secondary" id="reset-academic-filter" title="Reset to Current" type="button">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </div>
+
+                    <input type="text" class="search-input form-control" id="search-input" placeholder="Search inventory..." style="flex:1; min-width:200px;" />
+                </div>
+
+                <!-- Info Badge -->
+                <div id="academic-info-badge" class="hidden info-badge">
+                    <i class="fas fa-graduation-cap"></i>
+                    Viewing: <strong id="academic-display">Loading...</strong>
+                    <button id="clear-academic-view" class="btn-link text-danger" type="button">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+            </section>
+
+            <!-- Table -->
+            <section class="table-section card">
+                <div class="table-responsive">
+                    <table class="stock-table" style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f9fafb; text-align:left;">
+                                <th style="padding:12px;">Item Name</th>
+                                <th style="padding:12px;">Category</th>
+                                <th style="padding:12px;">Size/Batch</th>
+                                <th style="padding:12px;">Current Stock</th>
+                                <th style="padding:12px;">Unit Price (GH¢)</th>
+                                <th style="padding:12px;">Status</th>
+                                <th style="padding:12px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <!-- ADD PRODUCT MODAL -->
+    <div id="add-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAddModal()">&times;</span>
+            <h2 id="modal-title"><i class="fas fa-plus-circle"></i> Add New Product</h2>
+            <form id="add-product-form">
+                <input type="hidden" id="edit-product-id" />
+                <div class="form-group mb-3">
+                    <label>Item Name <small class="text-muted">(reference)</small></label>
+                    <input type="text" id="new-item-name" class="form-control" placeholder="e.g., GIRLS BLUE P.E KIT" required />
+                </div>
+                <div class="form-group mb-3">
+                    <label>Category</label>
+                    <select id="new-item-category" class="form-select" required>
+                        <option value="PE_KIT">P.E Kit</option>
+                        <option value="LILAC_UNIFORM">Lilac Uniform</option>
+                        <option value="CUSTOMISED_UNIFORM">Customised Uniform</option>
+                        <option value="LACOSTE_TSHIRT">Lacoste T-Shirt</option>
+                        <option value="SOCKS">Socks</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label>Size / Batch Info</label>
+                    <input type="text" id="new-item-size" class="form-control" placeholder="e.g., SIZE 100" required />
+                </div>
+                <div class="form-group mb-3">
+                    <label>Stock Level</label>
+                    <input type="number" id="new-item-stock" class="form-control" min="0" value="0" required />
+                    <small class="text-muted">Initial stock for new product</small>
+                </div>
+                <div class="form-group mb-3">
+                    <label>Unit Price (GH¢)</label>
+                    <input type="number" id="new-item-price" class="form-control" step="0.01" min="0" required />
+                </div>
+                <button type="submit" class="btn-primary w-100" id="form-submit-btn">
+                    <i class="fas fa-plus"></i> Add to Inventory
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- RESTOCK MODAL -->
+    <div id="restock-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 480px">
+            <input type="hidden" id="restock-unit-price">
+            <span class="close-modal" onclick="closeRestockModal()">&times;</span>
+            <h2><i class="fas fa-boxes-stacked"></i> Restock Product</h2>
+
+            <form id="restock-form">
+                <input type="hidden" id="restock-product-id" />
+                <input type="hidden" id="restock-weekly-stock-id" />
+
+                <div class="form-group mb-3">
+                    <label>Product Name</label>
+                    <input type="text" id="restock-product-name" class="form-control" readonly style="background: #f9fafb; font-weight: 500" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Size / Batch</label>
+                    <input type="text" id="restock-product-size" class="form-control" readonly style="background: #f9fafb" />
+                </div>
+
+                <div class="form-group mb-3 p-3 rounded" style="background: #f0fdf4; border: 1px solid #bbf7d0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Current Stock Level</span>
+                        <span id="restock-current-stock" class="badge badge-success" style="font-size: 1.1rem; padding: 6px 12px">0</span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Restock Quantity <span class="text-danger">*</span></label>
+                    <input type="number" id="restock-quantity" class="form-control" min="1" placeholder="Enter quantity to add" required />
+                    <small class="text-muted">This will be added to the current stock level</small>
+                </div>
+
+                <div class="form-group mb-3 p-2 rounded" style="background: #eff6ff; border: 1px solid #bfdbfe; display: none" id="restock-preview">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">New Stock Total</span>
+                        <strong id="restock-new-total" style="font-size: 1.1rem; color: #2563eb">0</strong>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary w-100" id="restock-submit-btn">
+                    <i class="fas fa-plus-circle"></i> Add Stock
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- IMPORT MODAL -->
+    <div id="import-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeImportModal()">&times;</span>
+            <h2><i class="fas fa-upload"></i> Import Inventory</h2>
+            <p class="text-muted mb-3 small">Upload CSV: <code>Name,Category,Size,Stock,Price</code></p>
+            <p class="text-muted small mb-3">Importing to: <strong id="import-week-label">Loading...</strong></p>
+            <input type="file" id="csv-file-input" accept=".csv" class="form-control mb-3" />
+            <button class="btn-primary w-100" type="button" onclick="processImport()">Upload &amp; Update</button>
+        </div>
+    </div>
+
+    <!-- EXPORT MODAL -->
+    <div id="export-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeExportModal()">&times;</span>
+            <h2><i class="fas fa-download"></i> Export Report</h2>
+
+            <div class="form-group mb-3">
+                <label>Report Scope</label>
+                <select id="export-scope" class="form-select">
+                    <option value="current">Current Week</option>
+                    <option value="selected">Selected Week</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label>Report Type</label>
+                <select id="export-type" class="form-select">
+                    <option value="full_stock">Full Stock List</option>
+                    <option value="low_stock">Low Stock (&lt;5)</option>
+                    <option value="summary">Category Summary</option>
+                    <option value="restock_history">📦 Restock History</option>
+                </select>
+            </div>
+
+            <div id="export-week-preview" class="hidden export-preview" style="margin-bottom:15px; font-size:0.9rem; color:#1e40af;">
+                <i class="fas fa-calendar"></i> Exporting: <strong id="export-week-label"></strong>
+            </div>
+
+            <button class="btn-primary w-100" type="button" onclick="executeExport()">
+                <i class="fas fa-file-csv"></i> Download CSV
+            </button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+<!-- External import module & scripts -->
+<script src="assets/js/config.js"></script>
+<script src="assets/js/stateManager.js"></script>
+<script src="assets/js/import-inventory.js"></script>
+
+<script>
+/* =========================
+   1. LIFECYCLE & INITIALIZATION
+   ========================= */
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        if (!window.APP) {
+            console.error("❌ stateManager.js is not loaded or missing from page scripts.");
+            return;
+        }
+
+        if (typeof window.APP.init === 'function') {
+            await window.APP.init();
+        }
+
+        const isAuth = typeof window.APP.isAuthenticated === 'function' && window.APP.isAuthenticated();
+        if (!isAuth) {
+            if (window.location.protocol !== 'file:') {
+                window.location.href = window.CONFIG?.routes?.login || 'index.html';
+            }
+            return;
+        }
+
+        updateSidebarUserUI();
+        await setupAcademicFilters();
+        await loadCurrentActiveAcademicContext();
+
+    } catch (err) {
+        console.error("Initialization error:", err);
+    }
+});
+
+/* =========================
+   2. UI HELPERS & PROFILE
+   ========================= */
+function updateSidebarUserUI() {
+    const user = window.APP?.user;
+    if (!user) return;
+
+    const fullName = user.full_name || user.username || user.email?.split('@')[0] || "Admin";
+    const img = document.querySelector('.user-profile img');
+    const name = document.querySelector('.user-profile .info h4');
+    const email = document.querySelector('.user-profile .info p');
+
+    if (img) img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=C8A2D9&color=fff`;
+    if (name) name.textContent = fullName.toUpperCase();
+    if (email) email.textContent = user.email || 'No email provided';
+}
+
+function showToast(msg, type = 'success') {
+    if (window.APP && typeof window.APP.showToast === 'function') {
+        window.APP.showToast(msg, type);
+    } else {
+        alert(`${type.toUpperCase()}: ${msg}`);
+    }
+}
+
+function openAddModal() {
+    const modal = document.getElementById('add-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.getElementById('add-product-form')?.reset();
+        
+        const editId = document.getElementById('edit-product-id');
+        if (editId) editId.value = '';
+        
+        const submitBtn = document.getElementById('form-submit-btn');
+        if (submitBtn) submitBtn.innerHTML = '<i class="fas fa-plus"></i> Add to Inventory';
+        
+        const modalTitle = document.getElementById('modal-title');
+        if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Add New Product';
+    }
+}
+
+function closeAddModal() { document.getElementById('add-modal')?.classList.add('hidden'); }
+function closeRestockModal() { document.getElementById('restock-modal')?.classList.add('hidden'); }
+function closeImportModal() { document.getElementById('import-modal')?.classList.add('hidden'); }
+function closeExportModal() { document.getElementById('export-modal')?.classList.add('hidden'); }
+
+window.addEventListener('click', (event) => {
+    if (event.target === document.getElementById('add-modal')) closeAddModal();
+    if (event.target === document.getElementById('restock-modal')) closeRestockModal();
+    if (event.target === document.getElementById('import-modal')) closeImportModal();
+    if (event.target === document.getElementById('export-modal')) closeExportModal();
+});
+
+async function handleLogout(event) {
+    if (event) event.preventDefault();
+    if (window.APP && typeof window.APP.signOut === 'function') {
+        await window.APP.signOut();
+    }
+}
+
+/* =========================
+   3. ACADEMIC CONTEXT & FILTERS
+   ========================= */
+async function setupAcademicFilters() {
+    const yearSelect = document.getElementById('academic-year-select');
+    const termSelect = document.getElementById('term-select');
+    const weekSelect = document.getElementById('week-select');
+
+    if (!yearSelect || !termSelect || !weekSelect) return;
+
+    const years = window.APP?.academic?.years || [];
+    yearSelect.innerHTML = '<option value="">All Years</option>';
+    
+    years.forEach(year => {
+        const opt = document.createElement('option');
+        opt.value = year.id;
+        opt.textContent = year.name + (year.is_active ? ' (Active)' : '');
+        if (year.is_active) opt.selected = true;
+        yearSelect.appendChild(opt);
+    });
+
+    yearSelect.addEventListener('change', (e) => {
+        termSelect.innerHTML = '<option value="">Select Term</option>';
+        weekSelect.innerHTML = '<option value="">Select Week</option>';
+        if (e.target.value) populateTerms(e.target.value);
+    });
+
+    termSelect.addEventListener('change', (e) => {
+        weekSelect.innerHTML = '<option value="">Select Week</option>';
+        if (e.target.value) populateWeeks(e.target.value);
+    });
+
+    document.getElementById('apply-academic-filter')?.addEventListener('click', () => {
+        refreshInventoryView(weekSelect.value || null);
+    });
+
+    document.getElementById('reset-academic-filter')?.addEventListener('click', () => {
+        loadCurrentActiveAcademicContext();
+    });
+}
+
+function populateTerms(yearId, targetTermId = null) {
+    const termSelect = document.getElementById('term-select');
+    if (!termSelect) return;
+
+    const terms = (window.APP?.academic?.terms || []).filter(t => t.academic_year_id === yearId);
+    termSelect.innerHTML = '<option value="">All Terms</option>';
+
+    terms.forEach(term => {
+        const opt = document.createElement('option');
+        opt.value = term.id;
+        opt.textContent = `${term.name} (${term.status || (term.is_active ? 'Active' : 'Closed')})`;
+        
+        if (targetTermId && term.id === targetTermId) opt.selected = true;
+        else if (!targetTermId && term.is_active) opt.selected = true;
+        
+        termSelect.appendChild(opt);
+    });
+
+    if (termSelect.value) populateWeeks(termSelect.value);
+}
+
+function populateWeeks(termId, targetWeekId = null) {
+    const weekSelect = document.getElementById('week-select');
+    if (!weekSelect) return;
+
+    const weeks = (window.APP?.academic?.weeks || []).filter(w => w.term_id === termId);
+    weekSelect.innerHTML = '<option value="">All Weeks</option>';
+
+    weeks.forEach(week => {
+        const opt = document.createElement('option');
+        opt.value = week.id;
+        const statusLabel = week.is_open ? 'Open' : 'Closed';
+        opt.textContent = `${week.name} (${statusLabel})`;
+        
+        if (targetWeekId && week.id === targetWeekId) opt.selected = true;
+        else if (!targetWeekId && week.is_open) opt.selected = true;
+        
+        weekSelect.appendChild(opt);
+    });
+}
+
+async function loadCurrentActiveAcademicContext() {
+    const activeYear = (window.APP?.academic?.years || []).find(y => y.is_active);
+    const openWeek = (window.APP?.academic?.weeks || []).find(w => w.is_open);
+
+    const yearSelect = document.getElementById('academic-year-select');
+    const displayLabel = document.getElementById('academic-display');
+    const infoBadge = document.getElementById('academic-info-badge');
+
+    if (activeYear && yearSelect) {
+        yearSelect.value = activeYear.id;
+        populateTerms(activeYear.id, openWeek?.term_id || null);
+        if (openWeek) populateWeeks(openWeek.term_id, openWeek.id);
+    }
+
+    if (openWeek) {
+        if (displayLabel) displayLabel.textContent = `${openWeek.name} (OPEN)`;
+        if (infoBadge) infoBadge.classList.remove('hidden');
+        await refreshInventoryView(openWeek.id);
+    } else {
+        if (displayLabel) displayLabel.textContent = 'No Open Week Found';
+        if (infoBadge) infoBadge.classList.remove('hidden');
+        await refreshInventoryView(null);
+    }
+}
+
+/* =========================
+   4. INVENTORY RENDERER
+   ========================= */
+/* =========================
+   4. INVENTORY RENDERER (Direct Fetch Override)
+   ========================= */
+async function refreshInventoryView(selectedWeekId = null) {
+    let targetWeekId = selectedWeekId;
+    if (!targetWeekId) {
+        const activeWeek = (window.APP?.academic?.weeks || []).find(w => w.is_open);
+        targetWeekId = activeWeek?.id || null;
+    }
+
+    const tbody = document.getElementById('inventory-table-body');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading inventory...</td></tr>';
+    }
+
+    const supabase = window.APP?.supabase;
+    if (!supabase) return;
+
+    try {
+        // ✅ EXPLICITLY FETCH FROM weekly_stock + products JOIN
+        // This completely bypasses stateManager.js and broken views
+        const { data, error } = await supabase
+            .from('weekly_stock')
+            .select(`
+                id,
+                product_id,
+                total_stock,
+                quantity_sold,
+                revenue,
+                products (
+                    product_name,
+                    category,
+                    size,
+                    unit_price
+                )
+            `)
+            .eq('week_id', targetWeekId);
+
+        if (error) throw error;
+
+        // Format data to match what the rest of the UI expects
+        const formattedItems = (data || []).map(row => ({
+            id: row.product_id, // Use product_id so openRestockModal finds it correctly
+            product_id: row.product_id,
+            name: row.products?.product_name || 'Unknown',
+            product_name: row.products?.product_name || 'Unknown',
+            category: row.products?.category || '-',
+            size: row.products?.size || '-',
+            price: row.products?.unit_price || 0,
+            unit_price: row.products?.unit_price || 0,
+            total_stock: row.total_stock || 0,
+            quantity_sold: row.quantity_sold || 0,
+            revenue: row.revenue || 0
+        }));
+
+        // Update global state
+        if (window.APP?.inventory) {
+            window.APP.inventory.items = formattedItems;
+        }
+
+        renderInventoryTable(formattedItems);
+
+    } catch (err) {
+        console.error("Error loading inventory:", err);
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:red;">Error loading inventory: ${err.message}</td></tr>`;
+        }
+    }
+}
+
+function renderInventoryTable(items) {
+    const tbody = document.getElementById('inventory-table-body');
+    if (!tbody) return;
+
+    if (!items || items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px;" class="text-muted">No inventory records found for this week.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = items.map(item => {
+        const name = item.name || item.product_name || 'Unknown';
+        const category = item.category || '-';
+        const size = item.size || '-';
+        
+        // ✅ LOCAL CALCULATION LOGIC: Calculate current stock in JavaScript
+        const totalStock = item.total_stock || 0;
+        const quantitySold = item.quantity_sold || 0;
+        const currentStock = totalStock - quantitySold; 
+        
+        const price = Number(item.price || item.unit_price || 0).toFixed(2);
+        const revenue = Number(item.revenue || 0).toFixed(2);
+        const badgeClass = currentStock < 5 ? 'badge-warning' : 'badge-success';
+
+        return `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding:12px; font-weight:500;">${name}</td>
+                <td style="padding:12px;">${category}</td>
+                <td style="padding:12px;">${size}</td>
+                <td style="padding:12px;">
+                    <span class="badge ${badgeClass}">${currentStock}</span>
+                </td>
+                <td style="padding:12px;">GH¢ ${price}</td>
+                <td style="padding:12px;">GH¢ ${revenue}</td>
+                <td style="padding:12px;">
+                    <button class="btn-icon" title="Restock" onclick="openRestockModal('${item.id}')">
+                        <i class="fas fa-boxes-stacked"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+// Helper function to calculate current stock for any item
+function getCurrentStock(item) {
+    const totalStock = item.total_stock || item.closing || 0;
+    const quantitySold = item.quantity_sold || 0;
+    return totalStock - quantitySold;
+}
+
+// Helper to check if item is in stock
+function isInStock(item) {
+    return getCurrentStock(item) > 0;
+}
+
+/* =========================
+   5. ADD PRODUCT LOGIC
+   ========================= */
+
+document.getElementById('add-product-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const supabase = window.APP?.supabase;
+    const submitBtn = document.getElementById('form-submit-btn');
+    if (!submitBtn || !supabase) return;
+
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const productName = document.getElementById('new-item-name').value.trim();
+        const category = document.getElementById('new-item-category').value;
+        const size = document.getElementById('new-item-size').value;
+        const price = parseFloat(document.getElementById('new-item-price').value) || 0;
+        const initialStock = parseInt(document.getElementById('new-item-stock').value, 10) || 0;
+        
+        const createdByWho = window.APP.user?.full_name || window.APP.user?.username || 'Admin';
+        const userId = window.APP.user?.id || null;
+
+        const openWeek = (window.APP.academic?.weeks || []).find(w => w.is_open);
+        if (!openWeek) throw new Error("No Academic Week is currently OPEN. Please activate an open week in the Academic Calendar.");
+
+        const term = (window.APP.academic?.terms || []).find(t => t.id === openWeek.term_id);
+        const academicYear = (window.APP.academic?.years || []).find(y => y.id === term?.academic_year_id);
+        const yearVal = academicYear ? parseInt(academicYear.name, 10) : new Date().getFullYear();
+
+        // 1. Check if a product with this exact name, category, and size already exists
+        const { data: existingProduct, error: checkError } = await supabase
+            .from('products')
+            .select('id')
+            .eq('product_name', productName)
+            .eq('category', category)
+            .eq('size', size)
+            .maybeSingle();
+
+        if (checkError) throw checkError;
+
+        let newProduct;
+        if (existingProduct) {
+            // It exists: Just update the price and ensure it's active
+            const { data: updatedProduct, error: updateError } = await supabase
+                .from('products')
+                .update({ unit_price: price, is_active: true })
+                .eq('id', existingProduct.id)
+                .select()
+                .single();
+            if (updateError) throw updateError;
+            newProduct = updatedProduct;
+        } else {
+            // It's new: Insert it normally (no upsert needed)
+            const { data: insertedProduct, error: insertError } = await supabase
+                .from('products')
+                .insert({
+                    product_name: productName,
+                    category: category,
+                    size: size,
+                    batch_type: 'REGULAR',
+                    unit_price: price,
+                    is_active: true
+                })
+                .select()
+                .single();
+            if (insertError) throw insertError;
+            newProduct = insertedProduct;
+        }
+
+        // 2. Insert Weekly Stock Row
+        const stockPayload = {
+            product_id: newProduct.id,
+            week_id: openWeek.id,
+            year: yearVal,
+            week_number: openWeek.week_number || openWeek.week_no || 1,
+            opening_stock: initialStock,
+            add_stock: 0,
+            quantity_sold: 0,
+            revenue: 0
+        };
+
+        const { error: stockError } = await supabase.from('weekly_stock').insert(stockPayload);
+        if (stockError) {
+            console.error("Weekly Stock Insert Error Details:", stockError);
+            throw stockError;
+        }
+
+        // 3. Insert Transaction Log
+        if (initialStock > 0) {
+            const txPayload = {
+                product_id: newProduct.id,
+                academic_week_id: openWeek.id,
+                week_number: openWeek.week_number || openWeek.week_no || 1,
+                transaction_type: 'RESTOCK',
+                quantity: initialStock,
+                unit_price_at_time: price,
+                year: yearVal,
+                created_by: createdByWho,
+                performed_by: userId || null
+            };
+
+            const { error: txError } = await supabase.from('transactions').insert(txPayload);
+            if (txError) console.warn("Transaction log warning:", txError);
+        }
+
+        showToast('✅ Product added successfully!', 'success');
+        closeAddModal();
+        e.target.reset();
+        await refreshInventoryView(openWeek.id);
+
+    } catch (err) {
+        showToast(err.message || 'Failed to add product', 'error');
+        console.error("Add Product Error:", err);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    }
+});
+
+/* =========================
+   6. RESTOCK PRODUCT LOGIC
+   ========================= */
+function openRestockModal(productId) {
+    const item = (window.APP?.inventory?.items || []).find(i => i.id === productId);
+    if (!item) return;
+
+    document.getElementById('restock-product-id').value = item.id;
+    document.getElementById('restock-product-name').value = item.name || item.product_name || '';
+    document.getElementById('restock-product-size').value = item.size || '';
+    document.getElementById('restock-current-stock').textContent = item.closing ?? item.current_stock ?? 0;
+    document.getElementById('restock-unit-price').value = item.price || item.unit_price || 0;
+
+    const modal = document.getElementById('restock-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+document.getElementById('restock-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const supabase = window.APP?.supabase;
+    const submitBtn = document.getElementById('restock-submit-btn');
+    if (!submitBtn || !supabase) return;
+
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Restocking...';
+
+    try {
+        const productId = document.getElementById('restock-product-id').value;
+        const addQty = parseInt(document.getElementById('restock-quantity').value, 10) || 0;
+        const unitPrice = parseFloat(document.getElementById('restock-unit-price').value) || 0;
+        const createdByWho = window.APP.user?.full_name || window.APP.user?.username || 'Admin';
+        const userId = window.APP.user?.id || null;
+
+        const openWeek = (window.APP.academic?.weeks || []).find(w => w.is_open);
+        if (!openWeek) throw new Error("No Academic Week is currently OPEN.");
+
+        const term = (window.APP.academic?.terms || []).find(t => t.id === openWeek.term_id);
+        const academicYear = (window.APP.academic?.years || []).find(y => y.id === term?.academic_year_id);
+        const yearVal = academicYear ? parseInt(academicYear.name, 10) : new Date().getFullYear();
+
+        // Fetch existing stock for this product in this specific week
+        const { data: currentStockRow, error: fetchErr } = await supabase
+            .from('weekly_stock')
+            .select('*')
+            .eq('product_id', productId)
+            .eq('week_id', openWeek.id) // ✅ Using the new week_id column
+            .maybeSingle();
+
+        if (fetchErr) throw fetchErr;
+
+        if (currentStockRow) {
+            // Update existing stock record
+            const { error: updateErr } = await supabase
+                .from('weekly_stock')
+                .update({ add_stock: (currentStockRow.add_stock || 0) + addQty })
+                .eq('id', currentStockRow.id);
+            if (updateErr) throw updateErr;
+        } else {
+            // ✅ THIS IS WHERE THE PAYLOAD GOES (For Restocking a product with no prior record this week)
+            const { error: insertErr } = await supabase
+                .from('weekly_stock')
+                .insert({
+                    product_id: productId,
+                    week_id: openWeek.id, // Links to term_weeks
+                    year: yearVal,
+                    week_number: openWeek.week_number || openWeek.week_no || 1,
+                    opening_stock: 0,
+                    add_stock: addQty,
+                    quantity_sold: 0,
+                    revenue: 0
+                });
+            if (insertErr) throw insertErr;
+        }
+
+        const txPayload = {
+            product_id: productId,
+            academic_week_id: openWeek.id,
+            week_number: openWeek.week_number || openWeek.week_no || 1,
+            transaction_type: 'RESTOCK',
+            quantity: addQty,
+            unit_price_at_time: unitPrice,
+            year: yearVal,
+            created_by: createdByWho,
+            performed_by: userId || null
+        };
+
+        const { error: txError } = await supabase.from('transactions').insert(txPayload);
+        if (txError) console.warn("Transaction log warning:", txError);
+
+        showToast('✅ Product restocked successfully!', 'success');
+        closeRestockModal();
+        e.target.reset();
+        await refreshInventoryView(openWeek.id);
+
+    } catch (err) {
+        showToast(err.message || 'Restock failed', 'error');
+        console.error("Restock Error:", err);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    }
+});
+</script>
+</body>
+</html>
